@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+// import io.swagger.v3.oas.annotations.media.Schema;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,6 +21,7 @@ import java.util.Set;
        })
 public class Tag {
 
+    // @Schema(description = "Auto Generated Tag ID", accessMode = Schema.AccessMode.READ_ONLY)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

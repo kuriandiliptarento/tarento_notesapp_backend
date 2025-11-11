@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 @Data // @Getter, @Setter, @EqualsAndHashCode, @ToString
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,6 +16,7 @@ import java.time.LocalDateTime;
 @Table(name = "users")
 public class User {
 
+    @Schema(description = "Auto Generated User ID", accessMode = Schema.AccessMode.READ_ONLY)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-// import java.util.List;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -16,6 +16,11 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+
+    @Transactional(readOnly = true)
+    public List<User> findAllUsers() {
+        return userRepository.findAll();
+    }
 
     /**
      * Registers a new user after checking for unique username/email.
@@ -35,7 +40,17 @@ public class UserService {
     }
 
     /**
-     * Finds a user by ID.
+     * Finds a user by ID.// --- GET /api/v1/users (NEW ENDPOINT) ---
+    @Operation(summary = "Get a list of all registered users (Admin function)")
+    @ApiResponse(responseCode = "200", description = "List of users retrieved.")
+    @GetMapping
+    public ResponseEntity<List<User>> getAllUsers() {
+        // Calls the new service method
+        List<User> users = userService.findAllUsers();
+        
+        // Returns the list with a 200 OK status
+        return ResponseEntity.ok(users);
+    }
      */
     public Optional<User> findById(Long userId) {
         return userRepository.findById(userId);
@@ -48,11 +63,6 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
     
-    /**
-     * Authenticates a user based on username and password.
-     * NOTE: This is a DUMMY authentication for simple user management.
-     * In production, the password should be compared against a hashed value.
-     */
     @Transactional(readOnly = true)
     public Optional<User> authenticate(String username, String rawPassword) {
         // 1. Find the user by username

@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+// import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @NoArgsConstructor
@@ -31,10 +33,15 @@ public class Note {
     @Column(name = "content", nullable = false)
     private String content;
 
+    // @Column(name = "folder_id")
+    // private long folderId;
+
     // --- Relationship to Folder (Many-to-One) ---
     // Many notes can belong to one folder
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "folder_id",nullable = false) // This column holds the ID of the parent folder
+    // @ManyToOne
+    @JoinColumn(name = "folder_id") // This column holds the ID of the parent folder
+    // @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Folder folder;
 
     // --- Relationship to Tags (Many-to-Many) ---

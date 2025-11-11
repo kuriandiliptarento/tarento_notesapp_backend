@@ -1,20 +1,26 @@
 package com.tarento.notesapp.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+// import lombok.Datae
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.Set;
 
-@Data
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+// import io.swagger.v3.oas.annotations.media.Schema;
+
+// @Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "folders")
 public class Folder {
 
+    // @Schema(description = "Auto Generated Folder ID", accessMode = Schema.AccessMode.READ_ONLY)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,6 +34,7 @@ public class Folder {
 
     // --- Self-Referencing Relationship (for nested folders) ---
     // Many folders can have one parent folder
+    @JsonIgnore //this is to not create a self referencing loop b/w parent and subfolder
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id") // Column in the 'folders' table pointing to its parent folder's ID
     private Folder parentFolder;

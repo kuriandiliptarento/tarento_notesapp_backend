@@ -6,6 +6,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +21,18 @@ import com.tarento.notesapp.dto.LoginRequest;
 public class UserController {
 
     private final UserService userService;
+
+    // --- GET /api/v1/users (NEW ENDPOINT) ---
+    @Operation(summary = "Get a list of all registered users (Admin function)")
+    @ApiResponse(responseCode = "200", description = "List of users retrieved.")
+    @GetMapping
+    public ResponseEntity<List<User>> getAllUsers() {
+        // Calls the new service method
+        List<User> users = userService.findAllUsers();
+        
+        // Returns the list with a 200 OK status
+        return ResponseEntity.ok(users);
+    }
 
     // --- POST /api/v1/users/login (NEW ENDPOINT) ---
     @Operation(summary = "Authenticate user and receive user details/ID")

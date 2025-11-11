@@ -1,6 +1,7 @@
 package com.tarento.notesapp.controllers;
 
-import com.tarento.notesapp.entity.Note; 
+import com.tarento.notesapp.entity.Note;
+// import com.tarento.notesapp.entity.User;
 import com.tarento.notesapp.service.NoteService; // Use the service layer!
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse; // Import this
@@ -22,6 +23,16 @@ public class NoteController {
     @Autowired
     public NoteController(NoteService noteService) {
         this.noteService = noteService;
+    }
+
+    @Operation(summary = "Get a list of all notes (Admin function)")
+    @ApiResponse(responseCode = "200", description = "List of all notes retrieved.")
+    @GetMapping
+    public ResponseEntity<List<Note>> getAllNotes() {
+        List<Note> notes = noteService.findAllNotes();
+        
+        // Returns the list with a 200 OK status
+        return ResponseEntity.ok(notes);
     }
 
     // --- POST /api/v1/notes (Create Note) ---

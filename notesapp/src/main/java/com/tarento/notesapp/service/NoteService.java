@@ -2,14 +2,24 @@ package com.tarento.notesapp.service;
 
 import com.tarento.notesapp.entity.Note;
 import com.tarento.notesapp.repository.NoteRepository;
+import com.tarento.notesapp.entity.Tag;
+// import com.tarento.notesapp.entity.User;
+import com.tarento.notesapp.entity.Folder;
+import com.tarento.notesapp.repository.FolderRepository; // NEW
+import com.tarento.notesapp.repository.TagRepository;
 
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor // Lombok annotation to inject the final NoteRepository
@@ -18,6 +28,13 @@ public class NoteService {
 
     // Dependency Injection via Lombok's @RequiredArgsConstructor (fields must be final)
     private final NoteRepository noteRepository;
+    private final FolderRepository folderRepository;
+    private final TagRepository tagRepository;
+
+    @Transactional(readOnly = true)
+    public List<Note> findAllNotes() {
+        return noteRepository.findAll();
+    }
 
     /**
      * Retrieves all notes belonging to a specific user.
@@ -46,6 +63,36 @@ public class NoteService {
      */
     @Transactional // Override read-only for write operations
     public Note createNote(Note note) {
+
+        // --- 1. Link Folder ---
+        if (note.getFolder() != null && note.getFolder().getId() != null) {
+            Folder folder = folderRepository.findById(note.getFolder().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Folder not found with ID: " + note.getFolder().getId()));
+            note.setFolder(folder);
+        } else {
+            note.setFolder(null); // Ensure unlinked if no ID is provided
+        }
+
+        // --- 2. Link Tags ---
+        if (note.getTags() != null && !note.getTags().isEmpty()) {
+            Set<Long> tagIds = note.getTags().stream()
+                                  .map(Tag::getId)
+                                  .collect(Collectors.toSet());
+            
+            List<Tag> foundTags = tagRepository.findAllById(tagIds);
+            
+            if (foundTags.size() != tagIds.size()) {
+                // Find which ID was missing for a better error message
+                String missingIds = tagIds.stream()
+                                          .filter(id -> foundTags.stream().noneMatch(t -> t.getId().equals(id)))
+                                          .map(Object::toString)
+                                          .collect(Collectors.joining(", "));
+                throw new IllegalArgumentException("One or more tags not found with IDs: " + missingIds);
+            }
+            note.setTags(new HashSet<>(foundTags));
+        } else {
+            note.setTags(new HashSet<>());
+        }
         // Business Logic Example: Ensure timestamps are set correctly on creation
         note.setCreatedAt(LocalDateTime.now());
         note.setUpdatedAt(LocalDateTime.now());
@@ -66,20 +113,48 @@ public class NoteService {
         
         return noteRepository.findById(noteId).map(existingNote -> {
             
-            // 1. Apply updates from the request details
-            existingNote.setTitle(noteDetails.getTitle());
-            existingNote.setContent(noteDetails.getContent());
+            // 1. Update basic fields (using entity setter for content to update timestamp)
+            if (noteDetails.getTitle() != null) {
+                existingNote.setTitle(noteDetails.getTitle());
+            }
+            if (noteDetails.getContent() != null) {
+                // This calls the custom setter in Note.java which updates updatedAt
+                existingNote.setContent(noteDetails.getContent()); 
+            }
             
-            // NOTE: Once Folder and Tags are implemented, update logic goes here:
-            // existingNote.setFolder(noteDetails.getFolder());
-            // existingNote.setTags(noteDetails.getTags());
+            // --- 2. Update Folder Link ---
+            // A null Folder object means remove the link (root folder)
+            if (noteDetails.getFolder() != null) {
+                 if (noteDetails.getFolder().getId() != null) {
+                    Folder folder = folderRepository.findById(noteDetails.getFolder().getId())
+                        .orElseThrow(() -> new IllegalArgumentException("Folder not found with ID: " + noteDetails.getFolder().getId()));
+                    existingNote.setFolder(folder);
+                 } else {
+                    // Set folder to null if object is present but ID is null (meaning set to root)
+                    existingNote.setFolder(null);
+                 }
+            }
+
+            // --- 3. Update Tags Link ---
+            // If the request provides a Set of tags, replace the existing tags
+            if (noteDetails.getTags() != null) {
+                Set<Long> tagIds = noteDetails.getTags().stream()
+                                              .map(Tag::getId)
+                                              .collect(Collectors.toSet());
+                
+                List<Tag> foundTags = tagRepository.findAllById(tagIds);
+                
+                if (foundTags.size() != tagIds.size()) {
+                    // Handle missing tags (similar to createNote)
+                    throw new IllegalArgumentException("One or more tags not found during update.");
+                }
+                existingNote.setTags(new HashSet<>(foundTags));
+            }
             
-            // 2. Set updated timestamp
-            existingNote.setUpdatedAt(LocalDateTime.now());
+            // Set updated timestamp (only needed if fields without custom setters were updated)
+            existingNote.setUpdatedAt(LocalDateTime.now()); 
             
-            // 3. Save the updated entity
             return noteRepository.save(existingNote);
-            
         });
     }
 
